@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, Request
 from typing import Dict, Any, Optional, List
 from pydantic import BaseModel
 import json
@@ -230,23 +230,5 @@ class MCPServer:
                 error_response = self._create_error_response(None, -32603, f"Internal error: {str(e)}")
                 return error_response.dict(exclude_none=True)
         
-        # Keep the old REST endpoints for backward compatibility (optional)
-        @app.get("/manifest")
-        async def get_manifest():
-            """Legacy REST endpoint for manifest."""
-            return self.manifest_manager.get_manifest(list(self.tools.values()))
-        
-        @app.post("/helloworld")
-        async def execute_helloworld(request: Dict[str, Any] = None):
-            """Legacy REST endpoint for helloworld."""
-            if "helloworld" not in self.tools:
-                raise HTTPException(status_code=404, detail="Tool not found")
-            
-            tool = self.tools["helloworld"]
-            try:
-                result = await tool.execute(request or {})
-                return {"result": result, "status": "success"}
-            except Exception as e:
-                raise HTTPException(status_code=500, detail=str(e))
         
         return app
