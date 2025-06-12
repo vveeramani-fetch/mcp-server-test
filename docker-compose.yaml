@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  dev-mcp-server:
+    build: ./dev-mcp-server
+    ports:
+      - "8080:8080"
+    environment:
+      - PYTHONPATH=/app/src
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  agent:
+    build: ./agent
+    depends_on:
+      - dev-mcp-server
+    environment:
+      - PYTHONPATH=/app/src
+      - MCP_SERVER_URL=http://dev-mcp-server:8080
+    command: >
+      sh -c "
+        echo 'Running agent tests...' &&
+        python -m pytest tests/ -v &&
+        echo 'Tests completed. Starting agent...' &&
+        python src/main.py &&
+        echo 'Agent execution completed. Keeping container alive for inspection...' &&
+        tail -f /dev/null
+      "
